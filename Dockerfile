@@ -24,7 +24,7 @@ COPY src ./src
 RUN ./mvnw clean package -DskipTests
 
 # Etapa final - imagen de runtime
-FROM openjdk:17-jre-slim
+FROM eclipse-temurin:17-jre
 
 # Crear usuario no-root para seguridad
 RUN groupadd -r appuser && useradd -r -g appuser appuser
@@ -49,4 +49,3 @@ ENV JAVA_OPTS="-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0"
 
 # Comando para ejecutar la aplicación
 ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar app.war"]
-ENTRYPOINT ["top", "-b"]
