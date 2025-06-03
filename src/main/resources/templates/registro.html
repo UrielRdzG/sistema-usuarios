@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro - Sistema de Usuarios</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding: 20px 0;
+        }
+        .registro-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            margin: 20px 0;
+        }
+        .registro-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 20px 20px 0 0;
+            padding: 2rem 0;
+        }
+        .registro-form {
+            padding: 2rem;
+        }
+        .form-control {
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            padding: 12px 15px;
+            transition: all 0.3s ease;
+        }
+        .form-control:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        }
+        .form-control.is-invalid {
+            border-color: #dc3545;
+        }
+        .btn-registro {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 10px;
+            padding: 12px 30px;
+            font-weight: 600;
+            transition: transform 0.3s ease;
+        }
+        .btn-registro:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        .alert {
+            border-radius: 10px;
+            border: none;
+        }
+        .input-group-text {
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-right: none;
+            border-radius: 10px 0 0 10px;
+        }
+        .input-group .form-control {
+            border-left: none;
+            border-radius: 0 10px 10px 0;
+        }
+        .registro-footer {
+            text-align: center;
+            padding: 1rem 2rem 2rem;
+            color: #6c757d;
+        }
+        .registro-footer a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+        }
+        .registro-footer a:hover {
+            color: #764ba2;
+        }
+        .invalid-feedback {
+            display: block;
+            font-size: 0.875rem;
+            color: #dc3545;
+        }
+        .password-requirements {
+            font-size: 0.875rem;
+            color: #6c757d;
+            margin-top: 0.25rem;
+        }
+        .password-strength {
+            height: 4px;
+            border-radius: 2px;
+            margin-top: 0.5rem;
+            transition: all 0.3s ease;
+        }
+        .strength-weak { background-color: #dc3545; }
+        .strength-medium { background-color: #ffc107; }
+        .strength-strong { background-color: #28a745; }
+        .file-input-wrapper {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+            width: 100%;
+        }
+        .file-input-wrapper input[type="file"] {
+            position: absolute;
+            left: -9999px;
+        }
+        .file-input-label {
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            padding: 12px 15px;
+            border: 2px dashed #e9ecef;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+        }
+        .file-input-label:hover {
+            border-color: #667eea;
+            background-color: #f8f9ff;
+        }
+        .preview-image {
+            max-width: 100px;
+            max-height: 100px;
+            border-radius: 10px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="registro-container">
+                <div class="registro-header text-center">
+                    <i class="fas fa-user-plus fa-3x mb-3"></i>
+                    <h3>Crear Cuenta</h3>
+                    <p class="mb-0">Únete al Sistema de Usuarios</p>
+                </div>
+
+                <div class="registro-form">
+                    <!-- Mensajes de alerta -->
+                    <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <span th:text="${error}">Error message</span>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+
+                    <!-- Formulario de registro -->
+                    <form th:action="@{/registro}" method="post" th:object="${usuario}" enctype="multipart/form-data" novalidate>
+                        <div class="row">
+                            <!-- Nombre -->
+                            <div class="col-md-6 mb-3">
+                                <label for="nombre" class="form-label">
+                                    <i class="fas fa-user me-2"></i>Nombre *
+                                </label>
+                                <input type="text"
+                                       class="form-control"
+                                       th:class="${#fields.hasErrors('nombre')} ? 'form-control is-invalid' : 'form-control'"
+                                       id="nombre"
+                                       th:field="*{nombre}"
+                                       placeholder="Tu nombre"
+                                       required
+                                       maxlength="50">
+                                <div th:if="${#fields.hasErrors('nombre')}" class="invalid-feedback">
+                                    <span th:errors="*{nombre}"></span>
+                                </div>
+                            </div>
+
+                            <!-- Apellido Paterno -->
+                            <div class="col-md-6 mb-3">
+                                <label for="apellidoPaterno" class="form-label">
+                                    <i class="fas fa-user me-2"></i>Apellido Paterno *
+                                </label>
+                                <input type="text"
+                                       class="form-control"
+                                       th:class="${#fields.hasErrors('apellidoPaterno')} ? 'form-control is-invalid' : 'form-control'"
+                                       id="apellidoPaterno"
+                                       th:field="*{apellidoPaterno}"
+                                       placeholder="Apellido paterno"
+                                       required
+                                       maxlength="50">
+                                <div th:if="${#fields.hasErrors('apellidoPaterno')}" class="invalid-feedback">
+                                    <span th:errors="*{apellidoPaterno}"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <!-- Apellido Materno -->
+                            <div class="col-md-6 mb-3">
+                                <label for="apellidoMaterno" class="form-label">
+                                    <i class="fas fa-user me-2"></i>Apellido Materno *
+                                </label>
+                                <input type="text"
+                                       class="form-control"
+                                       th:class="${#fields.hasErrors('apellidoMaterno')} ? 'form-control is-invalid' : 'form-control'"
+                                       id="apellidoMaterno"
+                                       th:field="*{apellidoMaterno}"
+                                       placeholder="Apellido materno"
+                                       required
+                                       maxlength="50">
+                                <div th:if="${#fields.hasErrors('apellidoMaterno')}" class="invalid-feedback">
+                                    <span th:errors="*{apellidoMaterno}"></span>
+                                </div>
+                            </div>
+
+                            <!-- Teléfono -->
+                            <div class="col-md-6 mb-3">
+                                <label for="numeroTelefonico" class="form-label">
+                                    <i class="fas fa-phone me-2"></i>Teléfono
+                                </label>
+                                <input type="tel"
+                                       class="form-control"
+                                       th:class="${#fields.hasErrors('numeroTelefonico')} ? 'form-control is-invalid' : 'form-control'"
+                                       id="numeroTelefonico"
+                                       th:field="*{numeroTelefonico}"
+                                       placeholder="1234567890"
+                                       pattern="[0-9]{10}"
+                                       maxlength="10">
+                                <div th:if="${#fields.hasErrors('numeroTelefonico')}" class="invalid-feedback">
+                                    <span th:errors="*{numeroTelefonico}"></span>
+                                </div>
+                                <div class="form-text">Ingresa 10 dígitos sin espacios</div>
+                            </div>
+                        </div>
+
+                        <!-- Email -->
+                        <div class="mb-3">
+                            <label for="email" class="form-label">
+                                <i class="fas fa-envelope me-2"></i>Correo Electrónico *
+                            </label>
+                            <div class="input-group">
+                                    <span class="input-group-text">
+                                        <i class="fas fa-envelope"></i>
+                                    </span>
+                                <input type="email"
+                                       class="form-control"
+                                       th:class="${#fields.hasErrors('email')} ? 'form-control is-invalid' : 'form-control'"
+                                       id="email"
+                                       th:field="*{email}"
+                                       placeholder="tu@email.com"
+                                       required>
+                            </div>
+                            <div th:if="${#fields.hasErrors('email')}" class="invalid-feedback">
+                                <span th:errors="*{email}"></span>
+                            </div>
+                        </div>
+
+                        <!-- Username -->
+                        <div class="mb-3">
+                            <label for="username" class="form-label">
+                                <i class="fas fa-at me-2"></i>Usuario *
+                            </label>
+                            <div class="input-group">
+                                    <span class="input-group-text">
+                                        <i class="fas fa-at"></i>
+                                    </span>
+                                <input type="text"
+                                       class="form-control"
+                                       th:class="${#fields.hasErrors('username')} ? 'form-control is-invalid' : 'form-control'"
+                                       id="username"
+                                       th:field="*{username}"
+                                       placeholder="Nombre de usuario"
+                                       required
+                                       minlength="4"
+                                       maxlength="20">
+                            </div>
+                            <div th:if="${#fields.hasErrors('username')}" class="invalid-feedback">
+                                <span th:errors="*{username}"></span>
+                            </div>
+                            <div class="form-text">Entre 4 y 20 caracteres</div>
+                        </div>
+
+                        <div class="row">
+                            <!-- Contraseña -->
+                            <div class="col-md-6 mb-3">
+                                <label for="password" class="form-label">
+                                    <i class="fas fa-lock me-2"></i>Contraseña *
+                                </label>
+                                <div class="input-group">
+                                        <span class="input-group-text">
+                                            <i class="fas fa-lock"></i>
+                                        </span>
+                                    <input type="password"
+                                           class="form-control"
+                                           th:class="${#fields.hasErrors('password')} ? 'form-control is-invalid' : 'form-control'"
+                                           id="password"
+                                           th:field="*{password}"
+                                           placeholder="Contraseña"
+                                           required
+                                           minlength="6">
+                                    <button type="button" class="btn btn-outline-secondary" id="togglePassword">
+                                        <i class="fas fa-eye" id="eyeIcon"></i>
+                                    </button>
+                                </div>
+                                <div th:if="${#fields.hasErrors('password')}" class="invalid-feedback">
+                                    <span th:errors="*{password}"></span>
+                                </div>
+                                <div class="password-requirements">
+                                    Mínimo 6 caracteres
+                                </div>
+                                <div class="password-strength" id="passwordStrength"></div>
+                            </div>
+
+                            <!-- Confirmar Contraseña -->
+                            <div class="col-md-6 mb-3">
+                                <label for="confirmarPassword" class="form-label">
+                                    <i class="fas fa-lock me-2"></i>Confirmar Contraseña *
+                                </label>
+                                <div class="input-group">
+                                        <span class="input-group-text">
+                                            <i class="fas fa-lock"></i>
+                                        </span>
+                                    <input type="password"
+                                           class="form-control"
+                                           id="confirmarPassword"
+                                           name="confirmarPassword"
+                                           placeholder="Confirmar contraseña"
+                                           required>
+                                    <button type="button" class="btn btn-outline-secondary" id="toggleConfirmPassword">
+                                        <i class="fas fa-eye" id="eyeIconConfirm"></i>
+                                    </button>
+                                </div>
+                                <div id="passwordMatchError" class="invalid-feedback" style="display: none;">
+                                    Las contraseñas no coinciden
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Foto de Perfil -->
+                        <div class="mb-4">
+                            <label for="fotoPerfil" class="form-label">
+                                <i class="fas fa-camera me-2"></i>Foto de Perfil (Opcional)
+                            </label>
+                            <div class="file-input-wrapper">
+                                <input type="file"
+                                       id="fotoPerfil"
+                                       name="fotoPerfil"
+                                       accept="image/*">
+                                <label for="fotoPerfil" class="file-input-label">
+                                    <i class="fas fa-cloud-upload-alt me-2"></i>
+                                    <span id="fileText">Seleccionar imagen</span>
+                                </label>
+                            </div>
+                            <div id="imagePreview"></div>
+                        </div>
+
+                        <!-- Términos y Condiciones -->
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="terminos" required>
+                                <label class="form-check-label" for="terminos">
+                                    Acepto los <a href="#" class="text-decoration-none">términos y condiciones</a> *
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary btn-registro">
+                                <i class="fas fa-user-plus me-2"></i>Crear Cuenta
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="registro-footer">
+                    <p class="mb-2">¿Ya tienes una cuenta?</p>
+                    <a href="/login" class="text-decoration-none">
+                        <i class="fas fa-sign-in-alt me-1"></i>Iniciar sesión
+                    </a>
+                    <hr class="my-3">
+                    <a href="/" class="text-decoration-none">
+                        <i class="fas fa-home me-1"></i>Volver al inicio
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    // Toggle password visibility
+    document.getElementById('togglePassword').addEventListener('click', function() {
+        const passwordField = document.getElementById('password');
+        const eyeIcon = document.getElementById('eyeIcon');
+
+        if (passwordField.type === 'password') {
+            passwordField.type = 'text';
+            eyeIcon.classList.remove('fa-eye');
+            eyeIcon.classList.add('fa-eye-slash');
+        } else {
+            passwordField.type = 'password';
+            eyeIcon.classList.remove('fa-eye-slash');
+            eyeIcon.classList.add('fa-eye');
+        }
+    });
+
+    document.getElementById('toggleConfirmPassword').addEventListener('click', function() {
+        const passwordField = document.getElementById('confirmarPassword');
+        const eyeIcon = document.getElementById('eyeIconConfirm');
+
+        if (passwordField.type === 'password') {
+            passwordField.type = 'text';
+            eyeIcon.classList.remove('fa-eye');
+            eyeIcon.classList.add('fa-eye-slash');
+        } else {
+            passwordField.type = 'password';
+            eyeIcon.classList.remove('fa-eye-slash');
+            eyeIcon.classList.add('fa-eye');
+        }
+    });
+
+    // Password strength indicator
+    document.getElementById('password').addEventListener('input', function() {
+        const password = this.value;
+        const strengthBar = document.getElementById('passwordStrength');
+        let strength = 0;
+
+        if (password.length >= 6) strength++;
+        if (password.match(/[a-z]/)) strength++;
+        if (password.match(/[A-Z]/)) strength++;
+        if (password.match(/[0-9]/)) strength++;
+        if (password.match(/[^a-zA-Z0-9]/)) strength++;
+
+        strengthBar.style.width = (strength * 20) + '%';
+
+        if (strength <= 2) {
+            strengthBar.className = 'password-strength strength-weak';
+        } else if (strength <= 3) {
+            strengthBar.className = 'password-strength strength-medium';
+        } else {
+            strengthBar.className = 'password-strength strength-strong';
+        }
+    });
+
+    // Confirm password validation
+    function validatePasswordMatch() {
+        const password = document.getElementById('password').value;
+        const confirmPassword = document.getElementById('confirmarPassword').value;
+        const errorDiv = document.getElementById('passwordMatchError');
+        const confirmPasswordField = document.getElementById('confirmarPassword');
+
+        if (confirmPassword && password !== confirmPassword) {
+            confirmPasswordField.classList.add('is-invalid');
+            errorDiv.style.display = 'block';
+            return false;
+        } else {
+            confirmPasswordField.classList.remove('is-invalid');
+            errorDiv.style.display = 'none';
+            return true;
+        }
+    }
+
+    document.getElementById('confirmarPassword').addEventListener('input', validatePasswordMatch);
+    document.getElementById('password').addEventListener('input', validatePasswordMatch);
+
+    // File input handling
+    document.getElementById('fotoPerfil').addEventListener('change', function() {
+        const file = this.files[0];
+        const fileText = document.getElementById('fileText');
+        const preview = document.getElementById('imagePreview');
+
+        if (file) {
+            fileText.textContent = file.name;
+
+            // Show image preview
+            const reader = new FileReader();

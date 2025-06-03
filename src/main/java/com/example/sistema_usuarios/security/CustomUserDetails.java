@@ -54,7 +54,7 @@ public class CustomUserDetails implements UserDetails {
         return usuario.isActivo();
     }
 
-    // Método para obtener el usuario completo
+    // Metodo para obtener el usuario completo
     public Usuario getUsuario() {
         return usuario;
     }

@@ -1,0 +1,93 @@
+version: '3.8'
+
+services:
+  # Base de datos MySQL
+  mysql:
+    image: mysql:8.0
+    container_name: sistema-usuarios
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: n0m3l0
+      MYSQL_DATABASE: sistema_usuarios
+      MYSQL_USER: #app_user
+      MYSQL_PASSWORD: #app_password
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./bd.sql:/docker-entrypoint-initdb.d/bd.sql:ro
+    networks:
+      - sistema-usuarios-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+      interval: 10s
+
+  # Aplicación Spring Boot
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: sistema-usuarios-app
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      # Configuración de base de datos
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/sistema_usuarios?useSSL=false&serverTimezone=America/Mexico_City&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: n0m3l0
+      SPRING_DATASOURCE_DRIVER_CLASS_NAME: com.mysql.cj.jdbc.Driver
+
+      # Configuración JPA/Hibernate
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_JPA_SHOW_SQL: false
+      SPRING_JPA_DATABASE_PLATFORM: org.hibernate.dialect.MySQLDialect
+
+      # Configuración del servidor
+      SERVER_PORT: 8080
+
+      # Configuración de archivos
+      SPRING_SERVLET_MULTIPART_MAX_FILE_SIZE: 10MB
+      SPRING_SERVLET_MULTIPART_MAX_REQUEST_SIZE: 10MB
+
+      # Perfil activo
+      SPRING_PROFILES_ACTIVE: docker
+
+      # Configuración de logging
+      LOGGING_LEVEL_ROOT: INFO
+      LOGGING_LEVEL_COM_EXAMPLE: DEBUG
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - sistema-usuarios-network
+    volumes:
+      - app_logs:/app/logs
+
+  # Adminer para administrar la base de datos (opcional)
+  adminer:
+    image: adminer:4.8.1
+    container_name: sistema-usuarios-adminer
+    restart: unless-stopped
+    ports:
+      - "8081:8080"
+    environment:
+      ADMINER_DEFAULT_SERVER: mysql
+    depends_on:
+      - mysql
+    networks:
+      - sistema-usuarios-network
+
+# Volúmenes para persistencia de datos
+volumes:
+  mysql_data:
+    driver: local
+  app_logs:
+    driver: local
+
+# Red personalizada
+networks:
+  sistema-usuarios-network:
+    driver: bridge

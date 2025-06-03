@@ -174,4 +174,9 @@ public class UsuarioService {
         return usuarioRepository.countByRol(rol);
     }
 
+    // Contar usuarios activos:
+    public long contarUsuariosActivos() {
+        return usuarioRepository.countByActivoTrue();
+    }
+
 }
