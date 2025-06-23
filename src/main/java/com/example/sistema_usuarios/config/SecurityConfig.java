@@ -9,6 +9,7 @@ import org.springframework.security.config.annotation.authentication.configurati
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 
@@ -17,26 +18,21 @@ import org.springframework.security.web.SecurityFilterChain;
 @EnableMethodSecurity(prePostEnabled = true)
 public class SecurityConfig {
 
+    // 1. Eliminamos el campo passwordEncoder de aquí
     private final CustomUserDetailsService userDetailsService;
-    private final Argon2PasswordEncoder passwordEncoder;
 
-    public SecurityConfig(CustomUserDetailsService userDetailsService,
-                          Argon2PasswordEncoder passwordEncoder) {
+    // 2. Eliminamos PasswordEncoder del constructor
+    public SecurityConfig(CustomUserDetailsService userDetailsService) {
         this.userDetailsService = userDetailsService;
-        this.passwordEncoder = passwordEncoder;
     }
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
                 .authorizeHttpRequests(authz -> authz
-                        // Rutas públicas
-                        .requestMatchers("/", "/login", "/registro", "/css/**", "/js/**", "/images/**", "/webjars/**").permitAll()
-                        // Rutas de administrador
+                        .requestMatchers("/", "/login", "/registro", "/css/**", "/js/**", "/images/**", "/webjars/**", "/favicon.ico").permitAll()
                         .requestMatchers("/admin/**").hasRole("ADMINISTRADOR")
-                        // Rutas de usuario (tanto usuario común como administrador)
                         .requestMatchers("/usuario/**", "/perfil/**").hasAnyRole("USUARIO", "ADMINISTRADOR")
-                        // Cualquier otra ruta requiere autenticación
                         .anyRequest().authenticated()
                 )
                 .formLogin(form -> form
@@ -59,15 +55,17 @@ public class SecurityConfig {
                         .maximumSessions(1)
                         .maxSessionsPreventsLogin(false)
                 )
-                .csrf(csrf -> csrf.disable()); // Para simplificar, en producción deberías configurar CSRF apropiadamente
+                .csrf(AbstractHttpConfigurer::disable);
 
         return http.build();
     }
 
+    // 3. Modificamos este método para que reciba el PasswordEncoder como parámetro
     @Bean
-    public DaoAuthenticationProvider authenticationProvider() {
+    public DaoAuthenticationProvider authenticationProvider(PasswordEncoder passwordEncoder) {
         DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
         authProvider.setUserDetailsService(userDetailsService);
+        // Spring inyectará aquí el bean creado por el método de abajo
         authProvider.setPasswordEncoder(passwordEncoder);
         return authProvider;
     }
@@ -77,8 +75,9 @@ public class SecurityConfig {
         return config.getAuthenticationManager();
     }
 
+    // 4. Mantenemos este metodo para que Spring sepa cómo crear el PasswordEncoder
     @Bean
     public PasswordEncoder passwordEncoder() {
-        return passwordEncoder;
+        return new Argon2PasswordEncoder();
     }
 }

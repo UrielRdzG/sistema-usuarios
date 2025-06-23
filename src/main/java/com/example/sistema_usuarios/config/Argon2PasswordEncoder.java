@@ -3,9 +3,7 @@ package com.example.sistema_usuarios.config;
 import de.mkammerer.argon2.Argon2;
 import de.mkammerer.argon2.Argon2Factory;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Component;
 
-@Component
 public class Argon2PasswordEncoder implements PasswordEncoder {
 
     private final Argon2 argon2;

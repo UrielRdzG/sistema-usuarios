@@ -1,16 +1,18 @@
 package com.example.sistema_usuarios.controller;
 
-import com.example.sistema_usuarios.model.Usuario;
 import com.example.sistema_usuarios.model.Rol;
-import com.example.sistema_usuarios.service.UsuarioService;
+import com.example.sistema_usuarios.model.Usuario;
 import com.example.sistema_usuarios.security.CustomUserDetails;
+import com.example.sistema_usuarios.service.UsuarioService;
 import jakarta.validation.Valid;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
@@ -21,8 +23,22 @@ import java.util.Optional;
 @Controller
 public class WebController {
 
+    private static final Logger logger = LoggerFactory.getLogger(WebController.class);
+
     @Autowired
     private UsuarioService usuarioService;
+
+    /**
+     * Este método se utiliza para configurar el data binder.
+     * Aquí le decimos a Spring que no intente vincular el campo 'fotoPerfil' automáticamente.
+     * Esto previene el error de conversión de MultipartFile a byte[], permitiéndonos
+     * manejar la conversión del archivo manualmente en nuestro método de controlador.
+     * @param binder El WebDataBinder para la solicitud actual.
+     */
+    @InitBinder
+    public void initBinder(WebDataBinder binder) {
+        binder.setDisallowedFields("fotoPerfil");
+    }
 
     // Página principal
     @GetMapping("/")
@@ -51,7 +67,7 @@ public class WebController {
         return "registro";
     }
 
-    // Procesar registro
+    // Procesar registro (versión robusta con logging)
     @PostMapping("/registro")
     public String procesarRegistro(@Valid @ModelAttribute("usuario") Usuario usuario,
                                    BindingResult result,
@@ -60,42 +76,56 @@ public class WebController {
                                    Model model,
                                    RedirectAttributes redirectAttributes) {
 
-        // Validaciones adicionales
-        if (result.hasErrors()) {
-            return "registro";
-        }
+        logger.info("--- INICIANDO PROCESO DE REGISTRO para usuario: {} ---", usuario.getUsername());
 
-        if (!usuario.getPassword().equals(confirmarPassword)) {
+        // 1. Validación de contraseña (se añade a los errores de @Valid)
+        if (usuario.getPassword() != null && !usuario.getPassword().equals(confirmarPassword)) {
+            logger.warn("Validación fallida: Las contraseñas no coinciden.");
             result.rejectValue("password", "error.usuario", "Las contraseñas no coinciden");
-            return "registro";
         }
 
-        if (usuarioService.existeUsername(usuario.getUsername())) {
+        // 2. Validaciones de negocio (existencia de username/email)
+        if (usuario.getUsername() != null && !usuario.getUsername().isBlank() && usuarioService.existeUsername(usuario.getUsername())) {
+            logger.warn("Validación fallida: El username '{}' ya existe.", usuario.getUsername());
             result.rejectValue("username", "error.usuario", "El nombre de usuario ya existe");
-            return "registro";
         }
 
-        if (usuarioService.existeEmail(usuario.getEmail())) {
+        if (usuario.getEmail() != null && !usuario.getEmail().isBlank() && usuarioService.existeEmail(usuario.getEmail())) {
+            logger.warn("Validación fallida: El email '{}' ya existe.", usuario.getEmail());
             result.rejectValue("email", "error.usuario", "El correo electrónico ya está registrado");
+        }
+
+        // 3. Comprobar si hubo algún error de validación en total
+        if (result.hasErrors()) {
+            logger.error("El formulario contiene errores de validación. Volviendo a la página de registro. Errores: {}", result.getAllErrors());
+            model.addAttribute("error", "Por favor, corrige los errores resaltados en el formulario.");
             return "registro";
         }
 
+        // 4. Si todas las validaciones pasan, se procede a guardar
         try {
-            // Procesar foto de perfil
+            logger.info("Todas las validaciones pasaron. Intentando guardar el usuario.");
+
             if (fotoPerfil != null && !fotoPerfil.isEmpty()) {
                 usuario.setFotoPerfil(fotoPerfil.getBytes());
+                logger.info("Foto de perfil procesada y lista para guardar.");
             }
 
-            // Registrar usuario
             usuarioService.registrarUsuario(usuario);
-            redirectAttributes.addFlashAttribute("mensaje", "Usuario registrado exitosamente");
+            logger.info("Usuario '{}' guardado en la base de datos exitosamente.", usuario.getUsername());
+
+            redirectAttributes.addFlashAttribute("mensaje", "¡Usuario registrado exitosamente! Ya puedes iniciar sesión.");
+
+            logger.info("--- REGISTRO COMPLETADO. Redirigiendo a /login. ---");
             return "redirect:/login";
 
         } catch (IOException e) {
-            model.addAttribute("error", "Error al procesar la imagen");
+            logger.error("Ocurrió una excepción de E/S (IOException) durante el guardado del usuario, probablemente con la imagen.", e);
+            model.addAttribute("error", "Ocurrió un error al procesar la imagen de perfil.");
             return "registro";
         } catch (Exception e) {
-            model.addAttribute("error", "Error al registrar usuario");
+            logger.error("Ocurrió una excepción inesperada durante el guardado del usuario.", e);
+            model.addAttribute("error", "Ocurrió un error interno al crear la cuenta. Por favor, inténtelo de nuevo más tarde.");
             return "registro";
         }
     }
@@ -176,19 +206,30 @@ public class WebController {
         }
 
         try {
-            // Procesar foto de perfil
+            // Actualizar usuario
+            Usuario usuarioExistente = usuarioService.obtenerUsuarioPorId(usuarioId)
+                    .orElseThrow(() -> new RuntimeException("Usuario no encontrado para actualizar. ID: " + usuarioId));
+
+            // Actualizar solo los campos necesarios del objeto existente
+            usuarioExistente.setNombre(usuario.getNombre());
+            usuarioExistente.setApellidoPaterno(usuario.getApellidoPaterno());
+            usuarioExistente.setApellidoMaterno(usuario.getApellidoMaterno());
+            usuarioExistente.setEmail(usuario.getEmail());
+            usuarioExistente.setNumeroTelefonico(usuario.getNumeroTelefonico());
+            usuarioExistente.setUsername(usuario.getUsername());
+
+            // Procesar foto de perfil si se subió una nueva
             if (fotoPerfil != null && !fotoPerfil.isEmpty()) {
-                usuario.setFotoPerfil(fotoPerfil.getBytes());
+                usuarioExistente.setFotoPerfil(fotoPerfil.getBytes());
             }
 
-            // Actualizar usuario
-            usuario.setId(usuarioId);
-            usuarioService.actualizarPerfil(usuario, nuevaPassword);
+            usuarioService.actualizarPerfil(usuarioExistente, nuevaPassword);
 
             redirectAttributes.addFlashAttribute("mensaje", "Perfil actualizado exitosamente");
             return "redirect:/perfil";
 
         } catch (Exception e) {
+            logger.error("Error al actualizar el perfil para el usuario ID: {}", usuarioId, e);
             model.addAttribute("error", "Error al actualizar el perfil");
             return "editar-perfil";
         }
