@@ -33,6 +33,7 @@ public class SecurityConfig {
                         .requestMatchers("/", "/login", "/registro", "/css/**", "/js/**", "/images/**", "/webjars/**", "/favicon.ico").permitAll()
                         .requestMatchers("/admin/**").hasRole("ADMINISTRADOR")
                         .requestMatchers("/usuario/**", "/perfil/**").hasAnyRole("USUARIO", "ADMINISTRADOR")
+                        .requestMatchers("/dashboard", "/perfil/**", "/usuario/foto/**").authenticated()
                         .anyRequest().authenticated()
                 )
                 .formLogin(form -> form

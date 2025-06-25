@@ -48,7 +48,7 @@ public class UsuarioService {
     }
 
     // Actualizar perfil del usuario (sin cambiar rol)
-    public Usuario actualizarPerfil(Usuario usuarioActualizado, String passwordActual) {
+    public Usuario actualizarPerfil(Usuario usuarioActualizado, String nuevaPassword) {
         Usuario usuarioExistente = obtenerUsuarioPorId(usuarioActualizado.getId())
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
@@ -58,10 +58,11 @@ public class UsuarioService {
         usuarioExistente.setApellidoMaterno(usuarioActualizado.getApellidoMaterno());
         usuarioExistente.setEmail(usuarioActualizado.getEmail());
         usuarioExistente.setNumeroTelefonico(usuarioActualizado.getNumeroTelefonico());
+        usuarioExistente.setUsername(usuarioActualizado.getUsername()); // También agregar esta línea
 
         // Si se proporciona una nueva contraseña, encriptarla
-        if (passwordActual != null && !passwordActual.trim().isEmpty()) {
-            usuarioExistente.setPassword(passwordEncoder.encode(passwordActual));
+        if (nuevaPassword != null && !nuevaPassword.trim().isEmpty()) {
+            usuarioExistente.setPassword(passwordEncoder.encode(nuevaPassword));
         }
 
         // Actualizar foto de perfil si se proporciona
