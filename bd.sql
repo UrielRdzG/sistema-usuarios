@@ -37,38 +37,3 @@ INSERT INTO usuarios (nombre, apellido_paterno, apellido_materno, email, numero_
 VALUES ('Juan', 'Pérez', 'García', 'juan@ejemplo.com', '9876543210', 'usuario1', '123456', 'USUARIO', TRUE)
     ON DUPLICATE KEY UPDATE id=id;
 
-CREATE TABLE IF NOT EXISTS libro_recomendaciones (
-                                                     id BIGINT AUTO_INCREMENT PRIMARY KEY,
-                                                     titulo VARCHAR(255) NOT NULL,
-    autor VARCHAR(500),
-    año_publicacion INT,
-    cover_id VARCHAR(100),
-    open_library_key VARCHAR(100),
-    temas VARCHAR(1000),
-    fecha_guardado DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    notas_personales VARCHAR(1000),
-    estado_lectura ENUM('QUIERO_LEER', 'LEYENDO', 'LEIDO', 'PAUSADO', 'ABANDONADO') DEFAULT 'QUIERO_LEER',
-    usuario_id BIGINT NOT NULL,
-
-    -- Índices para optimizar consultas
-    INDEX idx_usuario_fecha (usuario_id, fecha_guardado),
-    INDEX idx_usuario_estado (usuario_id, estado_lectura),
-    INDEX idx_open_library_key (open_library_key),
-
-    -- Clave foránea
-    CONSTRAINT fk_libro_usuario
-    FOREIGN KEY (usuario_id)
-    REFERENCES usuarios(id)
-    ON DELETE CASCADE
-    );
-
--- Crear índice único para evitar duplicados por usuario
-CREATE UNIQUE INDEX idx_usuario_libro_unique
-    ON libro_recomendaciones(usuario_id, open_library_key);
-
--- Comentarios para documentar la tabla
-ALTER TABLE libro_recomendaciones
-    COMMENT = 'Tabla para almacenar recomendaciones personales de libros por usuario';
-
--- Verificar que la tabla se creó correctamente
-DESCRIBE libro_recomendaciones;
