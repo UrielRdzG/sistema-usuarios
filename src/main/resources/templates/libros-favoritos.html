@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Mis Libros Favoritos - Sistema de Usuarios</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .favorites-section {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-top: 20px;
+        }
+        .book-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        .book-card:hover {
+            transform: translateY(-8px);
+            background: rgba(255, 255, 255, 0.15);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+        }
+        .book-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #ff6b6b, #ffd93d, #4ecdc4, #45b7d1);
+            border-radius: 15px 15px 0 0;
+        }
+        .book-cover {
+            width: 120px;
+            height: 180px;
+            object-fit: cover;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+            transition: transform 0.3s ease;
+        }
+        .book-card:hover .book-cover {
+            transform: scale(1.05);
+        }
+        .book-info {
+            flex: 1;
+            margin-left: 20px;
+        }
+        .book-title {
+            font-size: 1.3em;
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: #fff;
+            line-height: 1.3;
+        }
+        .book-author {
+            color: #b3e5fc;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+        .book-year {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 0.9em;
+            display: inline-block;
+            margin-right: 10px;
+        }
+        .book-date {
+            background: rgba(76, 175, 80, 0.3);
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 0.85em;
+            display: inline-block;
+        }
+        .book-subjects {
+            margin-top: 12px;
+            padding: 8px 0;
+        }
+        .subject-tag {
+            background: rgba(255, 255, 255, 0.15);
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 0.8em;
+            margin-right: 6px;
+            margin-bottom: 4px;
+            display: inline-block;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .remove-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: rgba(255, 107, 107, 0.8);
+            border: none;
+            border-radius: 50%;
+            width: 45px;
+            height: 45px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            color: white;
+            box-shadow: 0 4px 15px rgba(255, 107, 107, 0.4);
+        }
+        .remove-btn:hover {
+            background: #ff5252;
+            transform: scale(1.1);
+            box-shadow: 0 6px 20px rgba(255, 107, 107, 0.6);
+        }
+        .favorites-header {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 25px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .stats-card {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 15px;
+            text-align: center;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .stats-number {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #ffd93d;
+            display: block;
+        }
+        .search-container {
+            position: relative;
+            margin-bottom: 25px;
+        }
+        .search-input {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 25px;
+            color: white;
+            padding: 12px 20px;
+            backdrop-filter: blur(10px);
+        }
+        .search-input::placeholder {
+            color: rgba(255, 255, 255, 0.7);
+        }
+        .search-input:focus {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.5);
+            color: white;
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
+        }
+        .btn-search {
+            background: linear-gradient(45deg, #4ecdc4, #44a08d);
+            border: none;
+            border-radius: 25px;
+            color: white;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+        .btn-search:hover {
+            background: linear-gradient(45deg, #44a08d, #093637);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(78, 205, 196, 0.4);
+        }
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            border: 2px dashed rgba(255, 255, 255, 0.3);
+        }
+        .empty-state i {
+            font-size: 4em;
+            color: rgba(255, 255, 255, 0.5);
+            margin-bottom: 20px;
+        }
+        .btn-back {
+            background: linear-gradient(45deg, #43cea2, #185a9d);
+            border: none;
+            color: white;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+        .btn-back:hover {
+            background: linear-gradient(45deg, #185a9d, #43cea2);
+            color: white;
+            transform: translateY(-2px);
+        }
+        .alert-success-custom {
+            background: linear-gradient(45deg, #4caf50, #8bc34a);
+            border: none;
+            color: white;
+            border-radius: 12px;
+        }
+        .alert-danger-custom {
+            background: linear-gradient(45deg, #f44336, #ff9800);
+            border: none;
+            color: white;
+            border-radius: 12px;
+        }
+        .loading-spinner {
+            display: none;
+            text-align: center;
+            padding: 40px;
+        }
+        .filter-buttons {
+            margin-bottom: 20px;
+        }
+        .filter-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            border-radius: 20px;
+            padding: 6px 15px;
+            margin-right: 8px;
+            margin-bottom: 8px;
+            transition: all 0.3s ease;
+        }
+        .filter-btn:hover, .filter-btn.active {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border-color: rgba(255, 255, 255, 0.5);
+        }
+    </style>
+    <link href="/css/dark-mode.css" rel="stylesheet">
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <div class="container">
+        <a class="navbar-brand" href="#">Sistema de Usuarios</a>
+        <div class="navbar-nav ms-auto">
+            <a class="nav-link" th:href="@{/dashboard}">
+                <i class="fas fa-home"></i> Dashboard
+            </a>
+            <a class="nav-link active" th:href="@{/libros-favoritos}">
+                <i class="fas fa-heart"></i> Mis Favoritos
+            </a>
+            <a class="nav-link" th:href="@{/perfil}">Mi Perfil</a>
+            <a class="nav-link" th:href="@{/logout}">Cerrar Sesión</a>
+        </div>
+    </div>
+</nav>
+
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8">
+            <h2><i class="fas fa-heart text-danger"></i> Mis Libros Favoritos</h2>
+            <p class="text-muted">Administra tu colección personal de libros</p>
+        </div>
+        <div class="col-md-4 text-end">
+            <a href="/dashboard" class="btn btn-back">
+                <i class="fas fa-arrow-left"></i> Volver al Dashboard
+            </a>
+        </div>
+    </div>
+
+    <!-- Sección de Libros Favoritos -->
+    <div class="favorites-section">
+        <!-- Header con estadísticas -->
+        <div class="favorites-header">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h3><i class="fas fa-book-heart"></i> Mi Biblioteca Personal</h3>
+                    <p class="mb-0">Colección curada de tus libros favoritos</p>
+                </div>
+                <div class="col-md-4">
+                    <div class="stats-card">
+                        <span class="stats-number" th:text="${totalFavoritos}">0</span>
+                        <small>Libros Favoritos</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Alertas para feedback -->
+        <div id="alertContainer"></div>
+
+        <!-- Barra de búsqueda y filtros -->
+        <div class="search-container">
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="input-group">
+                        <input type="text" id="searchInput" class="form-control search-input"
+                               placeholder="Buscar en mis favoritos por título o autor..." autocomplete="off">
+                        <button class="btn btn-search" type="button" id="searchBtn">
+                            <i class="fas fa-search"></i> Buscar
+                        </button>
+                        <button class="btn btn-outline-light ms-2" type="button" id="clearSearch">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="filter-buttons">
+                        <button class="filter-btn active" data-filter="all">Todos</button>
+                        <button class="filter-btn" data-filter="recent">Recientes</button>
+                        <button class="filter-btn" data-filter="oldest">Antiguos</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading spinner -->
+        <div class="loading-spinner" id="loadingSpinner">
+            <i class="fas fa-spinner fa-spin fa-3x text-white"></i>
+            <p class="mt-3">Cargando libros favoritos...</p>
+        </div>
+
+        <!-- Lista de libros favoritos -->
+        <div id="favoritesContainer">
+            <!-- Libros se cargarán aquí con JavaScript -->
+        </div>
+
+        <!-- Estado vacío -->
+        <div class="empty-state" id="emptyState" style="display: none;">
+            <i class="fas fa-heart-broken"></i>
+            <h4>No tienes libros favoritos aún</h4>
+            <p>Explora el dashboard y comienza a agregar libros a tu colección personal</p>
+            <a href="/dashboard" class="btn btn-back btn-lg mt-3">
+                <i class="fas fa-search"></i> Buscar Libros
+            </a>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Variables del DOM
+        const favoritesContainer = document.getElementById('favoritesContainer');
+        const loadingSpinner = document.getElementById('loadingSpinner');
+        const emptyState = document.getElementById('emptyState');
+        const searchInput = document.getElementById('searchInput');
+        const searchBtn = document.getElementById('searchBtn');
+        const clearSearch = document.getElementById('clearSearch');
+        const alertContainer = document.getElementById('alertContainer');
+        const filterButtons = document.querySelectorAll('.filter-btn');
+
+        // Variables de estado
+        let allFavorites = [];
+        let filteredFavorites = [];
+        let currentFilter = 'all';
+
+        // Cargar libros favoritos al inicio
+        loadFavoriteBooks();
+
+        // ===== FUNCIONES PRINCIPALES =====
+
+        // Función para cargar libros favoritos
+        async function loadFavoriteBooks() {
+            showLoading(true);
+
+            try {
+                const response = await fetch('/libros-favoritos/json');
+                const data = await response.json();
+
+                if (data.success) {
+                    allFavorites = data.libros || [];
+                    filteredFavorites = [...allFavorites];
+                    displayFavorites(filteredFavorites);
+                } else {
+                    showAlert('Error al cargar los libros favoritos', 'danger');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showAlert('Error de conexión al cargar los libros', 'danger');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        // Función para mostrar los libros favoritos
+        function displayFavorites(favorites) {
+            if (!favorites || favorites.length === 0) {
+                favoritesContainer.style.display = 'none';
+                emptyState.style.display = 'block';
+                return;
+            }
+
+            emptyState.style.display = 'none';
+            favoritesContainer.style.display = 'block';
+
+            let html = '';
+            favorites.forEach(book => {
+                const coverUrl = book.coverId ?
+                    `https://covers.openlibrary.org/b/id/${book.coverId}-M.jpg` : '';
+                const subjects = book.temas ? book.temas.split(',').slice(0, 4) : [];
+                const formattedDate = formatDate(book.fechaAgregado);
+
+                html += `
+                    <div class="book-card" data-book-id="${book.id}">
+                        <button class="remove-btn" onclick="removeFavorite(${book.id}, '${escapeHtml(book.titulo)}')"
+                                title="Eliminar de favoritos">
+                            <i class="fas fa-trash"></i>
+                        </button>
+
+                        <div class="d-flex">
+                            <div class="book-cover-container">
+                                ${coverUrl ?
+                    `<img src="${coverUrl}" alt="${escapeHtml(book.titulo)}" class="book-cover"
+                                          onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                     <div class="book-cover d-none align-items-center justify-content-center"
+                                          style="background: rgba(255, 255, 255, 0.2);">
+                                         <i class="fas fa-book text-white fa-2x"></i>
+                                     </div>` :
+                    `<div class="book-cover d-flex align-items-center justify-content-center"
+                                          style="background: rgba(255, 255, 255, 0.2);">
+                                         <i class="fas fa-book text-white fa-2x"></i>
+                                     </div>`
+                }
+                            </div>
+
+                            <div class="book-info">
+                                <div class="book-title">${escapeHtml(book.titulo)}</div>
+                                <div class="book-author">
+                                    <i class="fas fa-user me-2"></i>${escapeHtml(book.autor || 'Autor desconocido')}
+                                </div>
+
+                                <div class="mb-3">
+                                    ${book.añoPublicacion ?
+                    `<span class="book-year">
+                                            <i class="fas fa-calendar me-1"></i>${escapeHtml(book.añoPublicacion)}
+                                         </span>` : ''
+                }
+                                    <span class="book-date">
+                                        <i class="fas fa-heart me-1"></i>Agregado ${formattedDate}
+                                    </span>
+                                </div>
+
+                                ${subjects.length > 0 ? `
+                                <div class="book-subjects">
+                                    <small><i class="fas fa-tags me-1"></i>Temas:</small><br>
+                                    ${subjects.map(subject =>
+                    `<span class="subject-tag">${escapeHtml(subject.trim())}</span>`
+                ).join('')}
+                                </div>
+                                ` : ''}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            favoritesContainer.innerHTML = html;
+        }
+
+        // Función para eliminar libro de favoritos
+        window.removeFavorite = async function(bookId, title) {
+            if (!confirm(`¿Estás seguro de que quieres eliminar "${title}" de tus favoritos?`)) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/libros-favoritos/eliminar/${bookId}`, {
+                    method: 'DELETE'
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showAlert('Libro eliminado de favoritos exitosamente', 'success');
+
+                    // Remover del DOM con animación
+                    const bookCard = document.querySelector(`[data-book-id="${bookId}"]`);
+                    if (bookCard) {
+                        bookCard.style.transform = 'translateX(-100%)';
+                        bookCard.style.opacity = '0';
+                        setTimeout(() => {
+                            bookCard.remove();
+                            // Actualizar arrays y recargar si es necesario
+                            loadFavoriteBooks();
+                        }, 300);
+                    }
+
+                    // Actualizar contador en la página
+                    updateStatsCounter();
+                } else {
+                    showAlert(data.message || 'Error al eliminar el libro', 'danger');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showAlert('Error de conexión al eliminar el libro', 'danger');
+            }
+        };
+
+        // ===== FUNCIONES DE BÚSQUEDA Y FILTRADO =====
+
+        function searchFavorites(query) {
+            if (!query.trim()) {
+                filteredFavorites = [...allFavorites];
+            } else {
+                const searchTerm = query.toLowerCase();
+                filteredFavorites = allFavorites.filter(book =>
+                    book.titulo.toLowerCase().includes(searchTerm) ||
+                    (book.autor && book.autor.toLowerCase().includes(searchTerm)) ||
+                    (book.temas && book.temas.toLowerCase().includes(searchTerm))
+                );
+            }
+
+            applyCurrentFilter();
+            displayFavorites(filteredFavorites);
+        }
+
+        function applyCurrentFilter() {
+            switch(currentFilter) {
+                case 'recent':
+                    filteredFavorites.sort((a, b) => new Date(b.fechaAgregado) - new Date(a.fechaAgregado));
+                    break;
+                case 'oldest':
+                    filteredFavorites.sort((a, b) => new Date(a.fechaAgregado) - new Date(b.fechaAgregado));
+                    break;
+                case 'all':
+                default:
+                    filteredFavorites.sort((a, b) => new Date(b.fechaAgregado) - new Date(a.fechaAgregado));
+                    break;
+            }
+        }
+
+        // ===== EVENT LISTENERS =====
+
+        searchBtn.addEventListener('click', () => {
+            searchFavorites(searchInput.value);
+        });
+
+        searchInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                searchFavorites(searchInput.value);
+            }
+        });
+
+        searchInput.addEventListener('input', (e) => {
+            if (e.target.value === '') {
+                searchFavorites('');
+            }
+        });
+
+        clearSearch.addEventListener('click', () => {
+            searchInput.value = '';
+            searchFavorites('');
+        });
+
+        filterButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                // Actualizar botones activos
+                filterButtons.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+
+                // Aplicar filtro
+                currentFilter = btn.dataset.filter;
+                applyCurrentFilter();
+                displayFavorites(filteredFavorites);
+            });
+        });
+
+        // ===== FUNCIONES AUXILIARES =====
+
+        function showLoading(show) {
+            loadingSpinner.style.display = show ? 'block' : 'none';
+            favoritesContainer.style.display = show ? 'none' : 'block';
+        }
+
+        function showAlert(message, type) {
+            const alertClass = type === 'success' ? 'alert-success-custom' : 'alert-danger-custom';
+            const icon = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle';
+
+            const alertHtml = `
+                <div class="alert ${alertClass} alert-dismissible fade show" role="alert">
+                    <i class="fas ${icon} me-2"></i>
+                    ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            `;
+
+            alertContainer.innerHTML = alertHtml;
+
+            // Auto-hide después de 4 segundos
+            setTimeout(() => {
+                const alert = alertContainer.querySelector('.alert');
+                if (alert) {
+                    const bsAlert = new bootstrap.Alert(alert);
+                    bsAlert.close();
+                }
+            }, 4000);
+        }
+
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            const now = new Date();
+            const diffTime = Math.abs(now - date);
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+            if (diffDays === 1) return 'hoy';
+            if (diffDays === 2) return 'ayer';
+            if (diffDays <= 7) return `hace ${diffDays} días`;
+            if (diffDays <= 30) return `hace ${Math.ceil(diffDays / 7)} semanas`;
+            if (diffDays <= 365) return `hace ${Math.ceil(diffDays / 30)} meses`;
+            return `hace ${Math.ceil(diffDays / 365)} años`;
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text || '';
+            return div.innerHTML;
+        }
+
+        function updateStatsCounter() {
+            const statsNumber = document.querySelector('.stats-number');
+            if (statsNumber) {
+                const currentCount = parseInt(statsNumber.textContent) - 1;
+                statsNumber.textContent = Math.max(0, currentCount);
+            }
+        }
+    });
+</script>
+<script src="/js/dark-mode.js"></script>
+</body>
+</html>

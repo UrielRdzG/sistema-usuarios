@@ -21,20 +21,22 @@ public class SistemaUsuariosApplication implements CommandLineRunner {
 	@Override
 	public void run(String... args) throws Exception {
 		// Crear usuario administrador por defecto si no existe
-		if (!usuarioService.existeUsername("admin")) {
+		if (!usuarioService.existeUsername("admin2")) {
 			Usuario admin = new Usuario();
 			admin.setNombre("Administrador");
 			admin.setApellidoPaterno("Sistema");
 			admin.setApellidoMaterno("Principal");
-			admin.setEmail("admin@sistema.com");
+			admin.setEmail("admin2@sistema.com");
 			admin.setNumeroTelefonico("1234567890");
-			admin.setUsername("admin");
+			admin.setUsername("admin2");
 			admin.setPassword("admin123");
 			admin.setRol(Rol.ADMINISTRADOR);
 
 			usuarioService.crearUsuario(admin);
 			System.out.println("Usuario administrador creado: admin/admin123");
 		}
+
+
 
 		// Crear usuario de prueba si no existe
 		if (!usuarioService.existeUsername("usuario1")) {
